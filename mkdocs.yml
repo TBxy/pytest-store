@@ -1,0 +1,10 @@
+site_name: pytest-store
+site_description: Pytest plugin to store values in during tests
+site_author: tb
+
+theme: readthedocs
+
+repo_url: https://github.com/TBxy/pytest-store
+
+pages:
+- Home: index.md
