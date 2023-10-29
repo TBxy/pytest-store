@@ -58,32 +58,31 @@ def set_store_obj(config: pytest.Config):
         raise UsageError(f"Store type {store_obj_str} does not exist, use {', '.join(Stores.keys())}.")
 
 
-def store_to_file(config: pytest.Config):
+def set_save_to_file(config: pytest.Config):
     save_path = get_option_or_ini("store_save", config, default=None)
     save_format = get_option_or_ini("store_save_format", config, default=None)
     save_force = get_option_or_ini("store_save_force", config, default=False, format=bool)
     if not save_path:
         return
-    save_path = pathlib.Path(str(save_path))
-    if not save_format:
-        save_format = save_path.suffix[1:]
     if not (config.getini("store_save_options") in (None, notset, "")):
         # TODO: maybe need to parse to dict
         options: dict = config.getini("store_save_options")  # type: ignore
     else:
         options = {}
-    store.save(save_path, format=str(save_format), force=bool(save_force), **options)
+    store.save_to(save_path, format=save_format, force=bool(save_force), options=options)
+    # store.save(save_path, format=str(save_format), force=bool(save_force), **options)
 
 
 def pytest_configure(config):
     set_store_obj(config)
+    set_save_to_file(config)
 
 
 @pytest.hookimpl(trylast=True)
 def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, config: pytest.Config):
     reports = terminalreporter.getreports("")
     # content = os.linesep.join(text for report in reports for secname, text in report.sections)
-    if store._store is not None:
+    if store.__stores__ is not None:
         terminalreporter.ensure_newline()
         terminalreporter.section("stored values summary", sep="=", blue=True, bold=True)
         # print(store.store)
@@ -106,7 +105,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         m = re.search(pat, item.name)
         if m and m.group(1):
             idx = int(m.group(1)) - 1
-            store.set_run(idx)
+            store.set_index(idx)
         item._fullname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
     else:
         item._fullname = item.nodeid
@@ -125,7 +124,8 @@ def pytest_runtest_logreport(report: pytest.TestReport):
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: Union[int, pytest.ExitCode]) -> None:
-    store_to_file(session.config)
+    store.save()
+    # store_to_file(session.config)
 
 
 # def pytest_runtest_teardown(item: pytest.Item) -> None:  # noqa: ARG001

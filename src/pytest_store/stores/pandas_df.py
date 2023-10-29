@@ -15,11 +15,12 @@ with contextlib.suppress(ModuleNotFoundError):
 
 from pytest_store.types import STORE_TYPES
 
-from pytest_store.stores._store_base import StoreBase
+from pytest_store.stores._store_base import StoreBase, SaveSettings
 
 
 class PandasDF(StoreBase):
     def __init__(self):
+        super().__init__()
         self._data = pd.DataFrame({}, index=[0])
         self._idx = None
         self.set_index(0)
@@ -58,21 +59,24 @@ class PandasDF(StoreBase):
                 print(self._data)
         return f.getvalue()
 
-    def save(self, path: Union[str, Path], format: str, **options):
+    def save(self, __save_settings: Union[None, SaveSettings] = None):
         """See https://pandas.pydata.org/docs/reference/io.html"""
-        if format == "xls":
-            format = "excel"
-        elif format == "md":
-            format = "markdown"
-        func = f"to_{format}"
-        if format == "sqlite":
-            self._save_sqlite(path, format, **options)
-        elif hasattr(self._data, func):
-            getattr(self._data, func)(path, **options)
-        else:
-            msg = f"Format '{format}' not supportd by pandas, see 'https://pandas.pydata.org/docs/reference/io.html'"
-            raise UserWarning(msg)
-        return Path(path)
+        settings = self._save_to if __save_settings is None else [__save_settings]
+        for cfg in settings:
+            format = cfg.format
+            if cfg.format == "xls":
+                cfg.format = "excel"
+            elif cfg.format == "md":
+                cfg.format = "markdown"
+            func = f"to_{cfg.format}"
+            if cfg.format == "sqlite":
+                self._save_sqlite(cfg.path, cfg.format, **cfg.options)
+            elif hasattr(self._data, func):
+                getattr(self._data, func)(cfg.path, **cfg.options)
+            else:
+                msg = f"Format '{cfg.format}' not supportd by pandas, see 'https://pandas.pydata.org/docs/reference/io.html'"
+                raise UserWarning(msg)
+        return settings
 
     def _save_sqlite(self, path: Union[str, Path], format: str, **options):
         cnx = sqlite3.connect(path)

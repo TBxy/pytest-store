@@ -14,11 +14,12 @@ with contextlib.suppress(ModuleNotFoundError):
     from rich import print
 
 from pytest_store.types import STORE_TYPES
-from pytest_store.stores._store_base import StoreBase
+from pytest_store.stores._store_base import StoreBase, SaveSettings
 
 
 class ListDict(StoreBase):
     def __init__(self):
+        super().__init__()
         self._data = []
         self._idx = None
         self.set_index(0)
@@ -46,19 +47,21 @@ class ListDict(StoreBase):
         if self._idx is not None:
             val = self._data[self._idx].get(name, default)
         else:
-            vak = None
+            val = None
         return val
 
-    def save(self, path: Union[str, Path], format: str, **options):
-        """See https://pandas.pydata.org/docs/reference/io.html"""
-        if format == "yml":
-            format = "yaml"
-        if hasattr(msgspec, format) and hasattr(getattr(msgspec, format), "encode"):
-            enc_cmd = getattr(getattr(msgspec, format), "encode")
-            stream = enc_cmd(self._data)
-            with open(path, "wb") as file:
-                file.write(stream)
-        return Path(path)
+    def save(self, __save_settings: Union[None, SaveSettings]):
+        """See https://jcristharif.com/msgspec/usage.html"""
+        settings = self._save_settings_list if __save_settings is None else [__save_settings]
+        for cfg in settings:
+            if cfg.format == "yml":
+                cfg.format = "yaml"
+            if hasattr(msgspec, cfg.format) and hasattr(getattr(msgspec, cfg.format), "encode"):
+                enc_cmd = getattr(getattr(msgspec, cfg.format), "encode")
+                stream = enc_cmd(self._data)
+                with open(cfg.path, "wb") as file:
+                    file.write(stream)
+        return settings
 
     def to_string(self, max_lines=40, max_width=0):
         values = msgspec.yaml.encode(self._data).decode("utf-8")
