@@ -31,22 +31,30 @@ python = ">=3.9,<3.13"
 pytest = ">=7.0.0"
 msgspec = "^0.18"
 pyyaml = "^6.0"
+tabulate = "^0.9.0" # markdown
+rich = "^13.6"
+# pandas
 pandas = { version = "^2.1", optional = true }
-openpyxl = { version = "^3.1.2", optional = true }
+# polars
+polars = { version ="^0.19", optional = true}
+polars-lts-cpu = { version ="^0.19", optional = true}
+# write reqs
+#   parquet
 fastparquet = { version = "^2023.10", optional = true }
 pyarrow = { version = "^13.0", optional = true }
+#   database
 sqlalchemy = { version = "^2.0", optional = true}
-tabulate = "^0.9.0"
-polars = "^0.19.12"
-polars-lts-cpu = "^0.19.12"
-xlsxwriter = "^3.1.9"
+#   excel
+openpyxl = { version = "^3.1.2", optional = true }
+xlsxwriter = { version ="^3.1.9", optional = true}
+xlsx2csv = { version ="^0.8.1", optional = true}
 
 [tool.poetry.extras]
 pandas = ["pandas"]
-pandas-excel = ["pandas", "openpyxl"]
-pandas-parquet = ["pandas", "fastparquet", "pyarrow"]
+polars = ["polars"]
 database = ["sqlalchemy"]
-
+excel = ["openpyxl", "xlsxwriter", "xlsx2csv"]
+parquet = ["fastparquet", "pyarrow"]
 
 [tool.poetry.group.dev.dependencies]
 tox = ">=4.11.3"
@@ -58,7 +66,6 @@ ruff = "*"
 #Pygments = ">=2.13.0"  # for code-block highlighting
 psutil = "^5.9.6"
 pytest-repeat = "^0.9.3"
-rich = "^13.6.0"
 icecream = "^2.1.3"
 
 [build-system]

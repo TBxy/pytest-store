@@ -22,7 +22,7 @@ def pytest_addoption(parser):
     group.addoption(
         "--store-save", action="store", help="Save file to path, format depends on the ending unless specified."
     )
-    group.addoption("--store-save-format", action="store", help="Save format.")
+    group.addoption("--store-save-format", choices=[n for n in Stores], action="store", help="Save format.")
     group.addoption("--store-save-force", action="store_true", help="Overwrite exisintg file")
 
     parser.addini("store_type", "Set store type")
@@ -69,7 +69,7 @@ def set_save_to_file(config: pytest.Config):
         options: dict = config.getini("store_save_options")  # type: ignore
     else:
         options = {}
-    store.save_to(save_path, format=save_format, force=bool(save_force), options=options)
+    store.save_to(str(save_path), format=save_format, force=bool(save_force), options=options)
     # store.save(save_path, format=str(save_format), force=bool(save_force), **options)
 
 
@@ -87,9 +87,11 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
         terminalreporter.section("stored values summary", sep="=", blue=True, bold=True)
         # print(store.store)
         terminalreporter.write(store.to_string())
-        if store.save_path:
+        if store.store is not None and store.store._save_settings_list:
             terminalreporter.write("\nSaved to '")
-            terminalreporter.write(store.save_path, bold=True, green=True)
+            terminalreporter.write(
+                ", ".join([str(s.path) for s in store.store._save_settings_list]), bold=True, green=True
+            )
             terminalreporter.write("'\n")
             # terminalreporter.write_sep(sep="-", title="oke")
 

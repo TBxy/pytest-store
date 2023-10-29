@@ -42,19 +42,9 @@ class PolarsDF(StoreBase):
             #    self._data = pl.concat([self._data, pl.DataFrame({}, index=[idx])])
 
     def set(self, name: str, value: STORE_TYPES):
-        if name in self._data.columns:
-            print(f"{name} exists in columns", self._data.columns)
-            self._data[self._idx, name] = value
-            ic(value)
-        else:
-            print(f"{name} exists NOT in columns", self._data.columns)
-            col = {name: value}
-            self._data = self._data.with_columns(**col)  # create column with the correct dtype
-            ic(self._data.columns)
-            null_col = self._data.clear(self._data.shape[0])[name]  # get null for all columns
-            null_col[self._idx] = value
-            ic(null_col)
-            self._data = self._data.with_columns(null_col)
+        otherwise = pl.col(name) if name in self._data.columns else None
+        _updated = self._data.select(pl.when(pl.col("index") == self._idx).then(value).otherwise(otherwise).alias(name))
+        self._data = self._data.with_columns(_updated)
         return value
 
     def get(
@@ -63,7 +53,13 @@ class PolarsDF(StoreBase):
         if name is None:
             return self._data.filter(pl.col("index") == self._idx)
             # return self._data.loc[self._idx]
-        return self._data[int(self._idx), name]
+        # return self._data[int(self._idx), name]
+        value = self._data.filter(pl.col("index") == self._idx)[name].item()
+        if value is None:
+            value = default
+        if isinstance(value, pl.Series):
+            value = value.to_list()
+        return value
 
     def to_string(self, max_lines=30, max_width=0):
         f = io.StringIO()
@@ -79,35 +75,43 @@ class PolarsDF(StoreBase):
         extras.settings = settings
         for cfg in settings:
             if cfg.format == "json":
-                options = {"row_oriented": True, "pretty": True}
-                options.update(cfg.options)
-                cfg.options = options
-            elif cfg.format == "xls":
+                cfg.default_options({"row_oriented": True, "pretty": True})
+            elif cfg.format in ["xls", "xlsx"]:
                 cfg.format = "excel"
-                cfg.default_options({"table_name": cfg.name, "worksheet": cfg.name})
+                cfg.default_options(
+                    {
+                        "table_name": cfg.name,
+                        "worksheet": cfg.name,
+                        "freeze_panes": (1, 0),
+                        "header_format": {"rotation": 60},
+                    }
+                )
             func = f"write_{cfg.format}"
             if cfg.format in ["sqlite", "sql"]:
                 uri = f"sqlite:///{cfg.path}"
-                options = {"table_name": cfg.name, "connection": uri, "if_exists": "replace"}
-                options.update(cfg.options)  # type: ignore
-                cfg.options = options
-                ic(cfg.options, func)
+                cfg.default_options({"table_name": cfg.name, "connection": uri, "if_exists": "replace"})
                 self._data.write_database(**cfg.options)
             elif cfg.format == "excel":
-                wb = extras.get_extras("excel").get("workbook", Workbook(cfg.path))
-                ic(wb)
-                extras.set_extras("excel", {"workbook": self._data.write_excel(workbook=wb, **cfg.options)})
+                # wb = extras.get_extras("excel").get("workbook", Workbook(cfg.path))
+                # ic(wb)
+                # _read = pl.read_excel(cfg.path)
+                # ic(_read)
+                # if isinstance(_read, dict):
+                #    for sheet, df in _read.items():
+                #        df.write_excel(workbook=wb, table_name=sheet, worksheet=sheet)
+                # else:
+                #    _read.write_excel(workbook=wb)
+                extras.set_extras("excel", {"workbook": self._data.write_excel(workbook=cfg.path, **cfg.options)})
             elif hasattr(self._data, func):
-                ic(cfg.options, func)
                 getattr(self._data, func)(cfg.path, **cfg.options)
             else:
                 msg = f"Format '{cfg.format}' not supportd by polars, see 'https://pola-rs.github.io/polars/py-polars/html/reference/io.html'"
                 raise UserWarning(msg)
         return extras
 
-    def _save_sqlite(self, path: Union[str, Path], format: str, **options):
-        cnx = sqlite3.connect(path)
-        self._data.to_sql(name="store", con=cnx, **options)
+    # def _save_sqlite(self, path: Union[str, Path], format: str, **options):
+    #    cnx = sqlite3.connect(path)
+    #    self._data.to_sql(name="store", con=cnx, **options)
 
 
 if __name__ == "__main__":
@@ -115,9 +119,9 @@ if __name__ == "__main__":
     store = PolarsDF()
 
     store.set_index(1)
-    store.set("hi", 0)
-    store.set("hi", 2)
-    store.set("cpu", 3.0)
+    store.set("hi", "name")
+    store.set("hi", "Hoi")
+    store.set("cpu", [3.0, 2.0])
     ic(store.get("cpu"))
     store.set_index(2)
     store.set("hi", 3)
@@ -131,6 +135,10 @@ if __name__ == "__main__":
     # store.set("list", [1, 2])
     # store.append("list", [23, 23])
     # store.set("cpu", 2)
-    extras = store.save(SaveSettings(Path("out.xls"), "data_first", "xls", {}))
-    store.save(SaveSettings(Path("out.xls"), "data_second", "xls", {}), extras)
+    extras = store.save(SaveSettings(Path("out.xlsx"), "data_first", "xls", {}))
+    store.set_index(3)
+    store.set("additional", 1)
+    ic(store.get("additional"))
+    store.save(SaveSettings(Path("out.xlsx"), "data_second", "xls", {}), extras)
+    # extras.get_extras("excel").get("workbook").close()
     print(store)

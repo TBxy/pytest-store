@@ -15,7 +15,7 @@ with contextlib.suppress(ModuleNotFoundError):
 
 from pytest_store.types import STORE_TYPES
 
-from pytest_store.stores._store_base import StoreBase, SaveSettings
+from pytest_store.stores._store_base import StoreBase, SaveSettings, SaveExtras
 
 
 class PandasDF(StoreBase):
@@ -59,13 +59,22 @@ class PandasDF(StoreBase):
                 print(self._data)
         return f.getvalue()
 
-    def save(self, __save_settings: Union[None, SaveSettings] = None):
+    def save(self, __save_settings: Union[None, SaveSettings] = None, __extras: Union[None, SaveExtras] = None):
         """See https://pandas.pydata.org/docs/reference/io.html"""
-        settings = self._save_to if __save_settings is None else [__save_settings]
+        settings = self._save_settings_list if __save_settings is None else [__save_settings]
+        extras = __extras if __extras else SaveExtras()
+        extras.settings = settings
         for cfg in settings:
-            format = cfg.format
-            if cfg.format == "xls":
+            print(f"Format '{cfg.format}'", settings)
+            if cfg.format in ["xls", "xlsx"]:
                 cfg.format = "excel"
+                cfg.default_options(
+                    {
+                        "sheet_name": cfg.name,
+                        "freeze_panes": (1, 0),
+                        "engine_kwargs": {},
+                    }
+                )
             elif cfg.format == "md":
                 cfg.format = "markdown"
             func = f"to_{cfg.format}"
@@ -74,9 +83,9 @@ class PandasDF(StoreBase):
             elif hasattr(self._data, func):
                 getattr(self._data, func)(cfg.path, **cfg.options)
             else:
-                msg = f"Format '{cfg.format}' not supportd by pandas, see 'https://pandas.pydata.org/docs/reference/io.html'"
+                msg = f"Format '{cfg.format}' not supportd by pandas (file: {cfg.path}), see 'https://pandas.pydata.org/docs/reference/io.html'"
                 raise UserWarning(msg)
-        return settings
+        return extras
 
     def _save_sqlite(self, path: Union[str, Path], format: str, **options):
         cnx = sqlite3.connect(path)

@@ -8,6 +8,7 @@ import msgspec
 import pandas as pd
 import pytest
 
+from icecream import ic
 from .types import STORE_TYPES
 from .stores import PandasDF
 from .stores._store_base import StoreBase, SaveSettings
@@ -23,7 +24,6 @@ class Store:
         if store is not None:
             self.set_store(store)
         self._item: Union[None, pytest.Item] = None
-        self.save_path = None
         self._save_to = []
 
     def set_store(self, store: Optional[StoreBase], name=None):
@@ -113,12 +113,14 @@ class Store:
         self,
         _path_or_obj: Union[None, str, Path] = None,
         format: Optional[str] = None,
+        name: Optional[str] = None,
         force: bool = False,
         options: dict[str, Any] = {},
     ):
         obj = None
         if _path_or_obj is not None:
-            obj = self._save_to_obj(_path_or_obj, format, options)
+            obj = self._save_to_obj(_path_or_obj, format=format, name=name, options=options)
+            self._prepare_existing_file(obj.path, force=force)
         if self.store is not None:
             self.store.save(obj)  # path, format, **options)
         # if isinstance(path, str):
@@ -162,8 +164,9 @@ class Store:
         elif isinstance(_path_or_obj, str):
             _path_or_obj = Path(_path_or_obj)
         if isinstance(_path_or_obj, Path):
-            if format is None:
+            if not format:
                 format = _path_or_obj.suffix[1:]
+            ic(format, _path_or_obj, _path_or_obj.suffix)
             obj = SaveSettings(path=_path_or_obj, name=name, format=format, options=options)
         if obj is None:
             raise UserWarning(f"Could not create 'SaveSettings' object with type {type(_path_or_obj)}.")
@@ -176,10 +179,11 @@ class Store:
                 new_name = get_new_name(name, number + 1, max=max)
             return new_name
 
-        if path.exists:
+        if path.exists():
             if force:
                 path.unlink(missing_ok=True)
                 return
+            ic(path)
             path.rename(get_new_name(f"{path.name}.bak"))
 
 

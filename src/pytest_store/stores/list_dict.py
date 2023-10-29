@@ -14,7 +14,7 @@ with contextlib.suppress(ModuleNotFoundError):
     from rich import print
 
 from pytest_store.types import STORE_TYPES
-from pytest_store.stores._store_base import StoreBase, SaveSettings
+from pytest_store.stores._store_base import StoreBase, SaveSettings, SaveExtras
 
 
 class ListDict(StoreBase):
@@ -50,9 +50,11 @@ class ListDict(StoreBase):
             val = None
         return val
 
-    def save(self, __save_settings: Union[None, SaveSettings]):
+    def save(self, __save_settings: Union[None, SaveSettings] = None, __extras: Union[None, SaveExtras] = None):
         """See https://jcristharif.com/msgspec/usage.html"""
         settings = self._save_settings_list if __save_settings is None else [__save_settings]
+        extras = __extras if __extras else SaveExtras()
+        extras.settings = settings
         for cfg in settings:
             if cfg.format == "yml":
                 cfg.format = "yaml"
@@ -61,7 +63,7 @@ class ListDict(StoreBase):
                 stream = enc_cmd(self._data)
                 with open(cfg.path, "wb") as file:
                     file.write(stream)
-        return settings
+        return extras
 
     def to_string(self, max_lines=40, max_width=0):
         values = msgspec.yaml.encode(self._data).decode("utf-8")
