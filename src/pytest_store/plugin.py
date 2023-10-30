@@ -97,7 +97,7 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
             # terminalreporter.write_sep(sep="-", title="oke")
 
 
-def _use_pytest_rerun(item):
+def _use_pytest_rerun(item, rerun_for):
     ic(item)
     ic(getattr(item, "store_run"))
     ic(getattr(item, "execution_count"))
@@ -129,9 +129,9 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # support for pytest-repeat
     count = item.config.getoption("count", 0)
-    rerun = item.config.getoption("rerun_for", None)
-    if rerun is not None:
-        _use_pytest_rerun(item, rerun)
+    rerun_for = item.config.getoption("rerun_for", None)
+    if rerun_for is not None:
+        _use_pytest_rerun(item, rerun_for)
     elif count is not None and count > 1:
         _use_pytest_repeat(item, count)
     # if not hasattr(item, "store_run"):
