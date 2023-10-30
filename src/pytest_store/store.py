@@ -151,7 +151,6 @@ class Store:
             return "\n".join(out_lines)
 
     def _get_name_with_prefix(self, name, prefix):
-        ic(self.item)
         if prefix == "default":
             prefix = self._default_prefix
             if self.item is None:

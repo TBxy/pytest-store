@@ -147,7 +147,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     #    item.store_testname = item.name.replace("test_", "")
     if not hasattr(item, "store_run"):
         item.store_run = 0
-    ic(store.get_index())
     if store.get_index() != item.store_run:
         if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
             store.set("PASS", bool(item.config.stash.get("_all_pass", True)), prefix="")
