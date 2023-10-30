@@ -50,6 +50,7 @@ xlsxwriter = { version ="^3.1.9", optional = true}
 xlsx2csv = { version ="^0.8.1", optional = true}
 
 [tool.poetry.extras]
+all = ["pandas", "polars", "sqlalchemy", "openpyxl", "xlsxwriter", "xlsx2csv", "fastparquet", "pyarrow"]
 pandas = ["pandas"]
 polars = ["polars"]
 database = ["sqlalchemy"]
@@ -154,4 +155,3 @@ files = "src/pytest_bdd/**/*.py"
 [[tool.mypy.overrides]]
 module = ["parse", "parse_type"]
 ignore_missing_imports = true
-
