@@ -98,9 +98,6 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
 
 
 def _use_pytest_rerun(item, rerun_for):
-    ic(item)
-    ic(getattr(item, "execution_count", "not found"))
-    ic(getattr(item, "store_run", "not found"))
     if not hasattr(item, "store_run") or getattr(item, "_use_store_run", False):
         item.store_run = getattr(item, "execution_count", 0)
         item._use_store_run = True
