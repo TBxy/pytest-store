@@ -43,6 +43,8 @@ class PolarsDF(StoreBase):
 
     def set(self, name: str, value: STORE_TYPES):
         otherwise = pl.col(name) if name in self._data.columns else None
+        if isinstance(value, str):
+            value = pl.lit(value)
         _updated = self._data.select(pl.when(pl.col("index") == self._idx).then(value).otherwise(otherwise).alias(name))
         self._data = self._data.with_columns(_updated)
         return value
