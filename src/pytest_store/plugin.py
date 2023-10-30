@@ -122,9 +122,14 @@ def _use_pytest_repeat(item, count):
             )
 
 
+def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
+    store.item = item
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_runtest_setup(item: pytest.Item) -> None:
-    # TODO: need to adapot --count to know which iteration and then make new entry
+    # store.item = item
+
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # support for pytest-rerun
     rerun_for = item.config.getoption("rerun_for", None)
@@ -141,7 +146,6 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         item.store_testname = item.name.replace("test_", "")
     if not hasattr(item, "store_run"):
         item.store_run = 0
-    store.item = item
     ic(store.get_index())
     if store.get_index() != item.store_run:
         if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
