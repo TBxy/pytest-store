@@ -151,9 +151,10 @@ class Store:
             return "\n".join(out_lines)
 
     def _get_name_with_prefix(self, name, prefix):
+        ic(self.item)
         if prefix == "default":
             prefix = self._default_prefix
-            if not self.item:
+            if self.item is None:
                 prefix = "PRE"
         if prefix:
             name = f"{prefix.format(item=self.item)}.{name}"
