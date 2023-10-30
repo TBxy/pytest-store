@@ -19,11 +19,13 @@ from _pytest.terminal import TerminalReporter
 
 def pytest_addoption(parser):
     group = parser.getgroup("store")
-    group.addoption("--store-type", action="store", help="Set store type (default: pandas).")
+    group.addoption(
+        "--store-type", action="store", help="Set store type (default: pandas).", choices=[n for n in Stores]
+    )
     group.addoption(
         "--store-save", action="store", help="Save file to path, format depends on the ending unless specified."
     )
-    group.addoption("--store-save-format", choices=[n for n in Stores], action="store", help="Save format.")
+    group.addoption("--store-save-format", action="store", help="Save format.")
     group.addoption("--store-save-force", action="store_true", help="Overwrite exisintg file")
 
     parser.addini("store_type", "Set store type")
