@@ -130,12 +130,12 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         _use_pytest_rerun(item, rerun_for)
     # support for pytest-repeat
     count = item.config.getoption("count", 0)
-    elif count is not None and count > 1:
+    if count is not None and count > 1:
         _use_pytest_repeat(item, count)
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     if not hasattr(item, "store_testname"):
-        #item.store_testname = item.nodeid
+        # item.store_testname = item.nodeid
         item.store_testname = item.name
     if not hasattr(item, "store_run"):
         item.store_run = 0
