@@ -124,6 +124,7 @@ def _use_pytest_repeat(item, count):
 
 def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
     store.item = item
+    item.store_testname = item.name.replace("test_", "")
 
 
 @pytest.hookimpl(trylast=True)
@@ -141,9 +142,9 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         _use_pytest_repeat(item, count)
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    if not hasattr(item, "store_testname"):
-        # item.store_testname = item.nodeid
-        item.store_testname = item.name.replace("test_", "")
+    # if not hasattr(item, "store_testname"):
+    #    # item.store_testname = item.nodeid
+    #    item.store_testname = item.name.replace("test_", "")
     if not hasattr(item, "store_run"):
         item.store_run = 0
     ic(store.get_index())
