@@ -97,46 +97,110 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
             # terminalreporter.write_sep(sep="-", title="oke")
 
 
+def _use_pytest_repeat(item, count):
+    if not hasattr(item, "store_run"):
+        if hasattr(item, "execution_count"):
+            item.store_run = item.execution_count
+
+
+#     pat = r"(\d+)-\d+\]"
+#     m = re.search(pat, item.name)
+#     if m and m.group(1):
+#         idx = int(m.group(1)) - 1
+#         item.store_run = idx
+# if not hasattr(item, "store_testname"):
+#     pat = r"(\d+)-\d+\]"
+#     m = re.search(pat, item.name)
+#     if m and m.group(1):
+#         idx = int(m.group(1)) - 1
+#         store.set_index(idx)
+#         item.store_run = idx
+#     item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
+
+
+def _use_pytest_rerun(item, count):
+    if not hasattr(item, "rerun_for"):
+        pat = r"(\d+)-\d+\]"
+        m = re.search(pat, item.name)
+        if m and m.group(1):
+            idx = int(m.group(1)) - 1
+            item.store_run = idx
+    if not hasattr(item, "store_testname"):
+        pat = r"(\d+)-\d+\]"
+        m = re.search(pat, item.name)
+        if m and m.group(1):
+            idx = int(m.group(1)) - 1
+            store.set_index(idx)
+            item.store_run = idx
+        item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
+
+
+def _use_pytest_rerun(item, count):
+    if not hasattr(item, "store_run"):
+        pat = r"(\d+)-\d+\]"
+        m = re.search(pat, item.name)
+        if m and m.group(1):
+            idx = int(m.group(1)) - 1
+            item.store_run = idx
+    if not hasattr(item, "store_testname"):
+        pat = r"(\d+)-\d+\]"
+        m = re.search(pat, item.name)
+        if m and m.group(1):
+            idx = int(m.group(1)) - 1
+            store.set_index(idx)
+            item.store_run = idx
+        item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
+
+
 @pytest.hookimpl(trylast=True)
 def pytest_runtest_setup(item: pytest.Item) -> None:
     # TODO: need to adapot --count to know which iteration and then make new entry
-    if not hasattr(item, "run_count"):
-        count = item.config.getoption("count", 0)
-        pat = None
-        if count is not None and count > 1:
-            pat = r"(\d+)-\d+\]"
-        if pat:
-            m = re.search(pat, item.name)
-            if m and m.group(1):
-                idx = int(m.group(1)) - 1
-                item.run_count = idx
-    if not hasattr(item, "run_testname"):
-        count = item.config.getoption("count", 0)
-        pat = None
-        if count is not None and count > 1:
-            pat = r"(\d+)-\d+\]"
-        if pat:
-            m = re.search(pat, item.name)
-            if m and m.group(1):
-                idx = int(m.group(1)) - 1
-                store.set_index(idx)
-                item.run_count = idx
-            item.run_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # support for pytest-repeat
+    count = item.config.getoption("count", 0)
+    if count is not None and count > 1:
+        _use_pytest_repeat(item, count)
+    rerun = item.config.getoption("rerun_for", None)
+    if rerun is not None:
+        _use_pytest_rerun(item, count)
+    # if not hasattr(item, "store_run"):
+    #    count = item.config.getoption("count", 0)
+    #    pat = None
+    #    if count is not None and count > 1:
+    #        pat = r"(\d+)-\d+\]"
+    #    if pat:
+    #        m = re.search(pat, item.name)
+    #        if m and m.group(1):
+    #            idx = int(m.group(1)) - 1
+    #            item.store_run = idx
+    # if not hasattr(item, "store_testname"):
+    #    count = item.config.getoption("count", 0)
+    #    pat = None
+    #    if count is not None and count > 1:
+    #        pat = r"(\d+)-\d+\]"
+    #    if pat:
+    #        m = re.search(pat, item.name)
+    #        if m and m.group(1):
+    #            idx = int(m.group(1)) - 1
+    #            store.set_index(idx)
+    #            item.store_run = idx
+    #        item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    if not hasattr(item, "run_testname"):
-        item.run_testname = item.nodeid
-    if not hasattr(item, "run_count"):
-        item.run_count = 0
+    if not hasattr(item, "store_testname"):
+        item.store_testname = item.nodeid
+    if not hasattr(item, "store_run"):
+        item.store_run = 0
     store.item = item
-    store.set_index(item.run_count)
+    store.set_index(item.store_run)
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
     if report.when == "teardown":
         item = store.item
         if item is not None:
-            store.set(f"{item.run_testname}_pass", report.passed)
-            # store.set(f"{item.run_testname}_outcome", report.outcome)
+            store.set(f"{item.store_testname}_pass", report.passed)
+            # store.set(f"{item.store_testname}_outcome", report.outcome)
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: Union[int, pytest.ExitCode]) -> None:
