@@ -14,7 +14,12 @@ from .stores._store_base import StoreBase, SaveSettings
 
 
 class Store:
-    def __init__(self, store: Optional[StoreBase] = None, default_name=None):
+    def __init__(
+        self,
+        store: Optional[StoreBase] = None,
+        default_name=None,
+        default_prefix: str = "{item.store_testname}",
+    ):
         self.__stores__: dict[str, StoreBase] = {}
         self._default_active_store = "default"
         if default_name is not None:
@@ -22,6 +27,7 @@ class Store:
         self._active_store = self._default_active_store
         if store is not None:
             self.set_store(store)
+        self._default_prefix = default_prefix
         self._item: Union[None, pytest.Item] = None
         self._save_to = []
 
@@ -70,26 +76,29 @@ class Store:
         if self.store is not None:
             self.store.set_index(run)
 
-    def set(self, name: str, value: STORE_TYPES, prefix: str = "{item.name}"):
+    def get_index(self) -> int:
         if self.store is not None:
-            if prefix:
-                name = f"{prefix.format(item=self.item)}_{name}"
+            return self.store._idx
+        else:
+            return 0
+
+    def set(self, name: str, value: STORE_TYPES, prefix: str = "default"):
+        if self.store is not None:
+            name = self._get_name_with_prefix(name, prefix)
             return self.store.set(name=name, value=value)
         return None
 
-    def append(self, name: str, value: STORE_TYPES, prefix: str = "{item.name}"):
+    def append(self, name: str, value: STORE_TYPES, prefix: str = "default"):
         if self.store is not None:
-            if prefix:
-                name = f"{prefix.format(item=self.item)}_{name}"
+            name = self._get_name_with_prefix(name, prefix)
             return self.store.append(name=name, value=value)
         return None
 
     def get(
-        self, name: Optional[str] = None, default: STORE_TYPES = None, prefix: str = "{item.name}"
+        self, name: Optional[str] = None, default: STORE_TYPES = None, prefix: str = "default"
     ) -> Union[dict[str, STORE_TYPES], STORE_TYPES]:
         if self.store is not None:
-            if prefix:
-                name = f"{prefix.format(item=self.item)}_{name}"
+            name = self._get_name_with_prefix(name, prefix)
             return self.store.get(name=name, default=default)
         return None
 
@@ -128,17 +137,6 @@ class Store:
             self._prepare_existing_file(obj.path, force=force)
         if self.store is not None:
             self.store.save(obj)  # path, format, **options)
-        # if isinstance(path, str):
-        #    path = Path(path)
-        # self._prepare_existing_file(path, force=force)
-        # if self.store is not None:
-        #    if hasattr(self.store, "save"):
-        #        self.store.save(path, format, **options)
-        #        self.save_path = str(path)
-        #    else:
-        #        msg = f"Save not supported for {self.store}"
-        #        raise UserWarning(msg)
-        # return Path(path)
 
     def to_string(self, max_lines: int = 40, max_width: int = 120):
         if self.store is not None and hasattr(self.store, "to_string"):
@@ -151,6 +149,13 @@ class Store:
             if len(out_lines) > max_lines:
                 out_lines = out_lines[: max_lines / 2] + out_lines[-max_lines / 2 :]
             return "\n".join(out_lines)
+
+    def _get_name_with_prefix(self, name, prefix):
+        if prefix == "default":
+            prefix = self._default_prefix
+        if prefix:
+            name = f"{prefix.format(item=self.item)}.{name}"
+        return name
 
     def _save_to_obj(
         self,

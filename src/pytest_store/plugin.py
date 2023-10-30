@@ -77,6 +77,9 @@ def set_save_to_file(config: pytest.Config):
 def pytest_configure(config):
     set_store_obj(config)
     set_save_to_file(config)
+    # first row
+    if config.getoption("repeat_scope", None) == "session" or config.getoption("rerun_for", None):
+        store.set("PASS", False, prefix="")
 
 
 @pytest.hookimpl(trylast=True)
@@ -99,7 +102,7 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
 
 def _use_pytest_rerun(item, rerun_for):
     if not hasattr(item, "store_run") or getattr(item, "_use_store_run", False):
-        item.store_run = getattr(item, "execution_count", 0)
+        item.store_run = int(getattr(item, "execution_count", 0))
         item._use_store_run = True
 
 
@@ -109,15 +112,14 @@ def _use_pytest_repeat(item, count):
         m = re.search(pat, item.name)
         if m and m.group(1):
             idx = int(m.group(1)) - 1
-            item.store_run = idx
+            item.store_run = int(idx)
     if not hasattr(item, "store_testname"):
         pat = r"(\d+)-\d+\]"
         m = re.search(pat, item.name)
-        if m and m.group(1):
-            idx = int(m.group(1)) - 1
-            store.set_index(idx)
-            item.store_run = idx
-        item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
+        if m:
+            item.store_testname = (
+                item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]").replace("test_", "")
+            )
 
 
 @pytest.hookimpl(trylast=True)
@@ -136,22 +138,31 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
 
     if not hasattr(item, "store_testname"):
         # item.store_testname = item.nodeid
-        item.store_testname = item.name
+        item.store_testname = item.name.replace("test_", "")
     if not hasattr(item, "store_run"):
         item.store_run = 0
     store.item = item
-    store.set_index(item.store_run)
+    ic(store.get_index())
+    if store.get_index() != item.store_run:
+        if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
+            store.set("PASS", bool(item.config.stash.get("_all_pass", True)), prefix="")
+            item.config.stash["_all_pass"] = True
+        store.set_index(item.store_run)
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
-    if report.when == "teardown":
+    if report.when == "call":
         item = store.item
         if item is not None:
-            store.set(f"{item.store_testname}_pass", report.passed)
-            # store.set(f"{item.store_testname}_outcome", report.outcome)
+            if not report.passed:
+                item.config.stash["_all_pass"] = False
+            store.set("PASS", report.passed)
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: Union[int, pytest.ExitCode]) -> None:
+    if session.config.getoption("repeat_scope", None) == "session" or session.config.getoption("rerun_for", None):
+        store.set("PASS", bool(session.config.stash.get("_all_pass", True)), prefix="")
+        session.config.stash["_all_pass"] = True
     store.save()
     # store_to_file(session.config)
 
