@@ -97,45 +97,13 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
             # terminalreporter.write_sep(sep="-", title="oke")
 
 
-def _use_pytest_repeat(item, count):
+def _use_pytest_rerun(item, count):
     if not hasattr(item, "store_run"):
         if hasattr(item, "execution_count"):
             item.store_run = item.execution_count
 
 
-#     pat = r"(\d+)-\d+\]"
-#     m = re.search(pat, item.name)
-#     if m and m.group(1):
-#         idx = int(m.group(1)) - 1
-#         item.store_run = idx
-# if not hasattr(item, "store_testname"):
-#     pat = r"(\d+)-\d+\]"
-#     m = re.search(pat, item.name)
-#     if m and m.group(1):
-#         idx = int(m.group(1)) - 1
-#         store.set_index(idx)
-#         item.store_run = idx
-#     item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
-
-
-def _use_pytest_rerun(item, count):
-    if not hasattr(item, "rerun_for"):
-        pat = r"(\d+)-\d+\]"
-        m = re.search(pat, item.name)
-        if m and m.group(1):
-            idx = int(m.group(1)) - 1
-            item.store_run = idx
-    if not hasattr(item, "store_testname"):
-        pat = r"(\d+)-\d+\]"
-        m = re.search(pat, item.name)
-        if m and m.group(1):
-            idx = int(m.group(1)) - 1
-            store.set_index(idx)
-            item.store_run = idx
-        item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
-
-
-def _use_pytest_rerun(item, count):
+def _use_pytest_repeat(item, count):
     if not hasattr(item, "store_run"):
         pat = r"(\d+)-\d+\]"
         m = re.search(pat, item.name)
@@ -158,11 +126,11 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # support for pytest-repeat
     count = item.config.getoption("count", 0)
-    if count is not None and count > 1:
-        _use_pytest_repeat(item, count)
     rerun = item.config.getoption("rerun_for", None)
     if rerun is not None:
         _use_pytest_rerun(item, count)
+    elif count is not None and count > 1:
+        _use_pytest_repeat(item, count)
     # if not hasattr(item, "store_run"):
     #    count = item.config.getoption("count", 0)
     #    pat = None
