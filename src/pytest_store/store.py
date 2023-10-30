@@ -153,6 +153,8 @@ class Store:
     def _get_name_with_prefix(self, name, prefix):
         if prefix == "default":
             prefix = self._default_prefix
+            if not self.item:
+                prefix = "PRE"
         if prefix:
             name = f"{prefix.format(item=self.item)}.{name}"
         return name
