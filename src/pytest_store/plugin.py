@@ -55,8 +55,8 @@ def set_store_obj(config: pytest.Config):
     store_obj_str = store_obj_str.replace("_", "-").lower()
     if store_obj_str in Stores:
         store.set_store(Stores[store_obj_str]())
-    elif not (config.getini("store_type") in (None, notset, "", "none")):
-        raise UsageError(f"Store type {store_obj_str} does not exist, use {', '.join(Stores.keys())}.")
+    elif not (store_obj_str in (None, notset, "", "none")):
+        raise pytest.UsageError(f"Store type {store_obj_str} does not exist, use {', '.join(Stores.keys())}.")
 
 
 def set_save_to_file(config: pytest.Config):
