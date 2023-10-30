@@ -77,8 +77,10 @@ class Store:
             return self.store.set(name=name, value=value)
         return None
 
-    def append(self, name: str, value: STORE_TYPES):
+    def append(self, name: str, value: STORE_TYPES, prefix: str = "{item.name}"):
         if self.store is not None:
+            if prefix:
+                name = f"{prefix.format(item=self.item)}_{name}"
             return self.store.append(name=name, value=value)
         return None
 
