@@ -5,7 +5,6 @@ from re import S
 from typing import Any, Optional, Union
 import msgspec
 
-import pandas as pd
 import pytest
 
 from icecream import ic
