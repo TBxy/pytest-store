@@ -70,8 +70,10 @@ class Store:
         if self.store is not None:
             self.store.set_index(run)
 
-    def set(self, name: str, value: STORE_TYPES):
+    def set(self, name: str, value: STORE_TYPES, prefix: str = "{item.name}"):
         if self.store is not None:
+            if prefix:
+                name = f"{prefix.format(item=self.item)}_{name}"
             return self.store.set(name=name, value=value)
         return None
 
@@ -81,9 +83,11 @@ class Store:
         return None
 
     def get(
-        self, name: Optional[str] = None, default: STORE_TYPES = None
+        self, name: Optional[str] = None, default: STORE_TYPES = None, prefix: str = "{item.name}"
     ) -> Union[dict[str, STORE_TYPES], STORE_TYPES]:
         if self.store is not None:
+            if prefix:
+                name = f"{prefix.format(item=self.item)}_{name}"
             return self.store.get(name=name, default=default)
         return None
 
