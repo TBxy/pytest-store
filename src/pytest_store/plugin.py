@@ -148,7 +148,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     # first row
     ic(item.name)
     if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
-        if store.get("PASS", None, prefix="") is None:
+        if store.get("PASS", default=None, prefix="") is None:
             store.set("PASS", False, prefix="")
             ic("set PASS to False")
     if store.get_index() != item.store_run:

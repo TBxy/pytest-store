@@ -56,7 +56,10 @@ class PolarsDF(StoreBase):
             return self._data.filter(pl.col("RUN") == self._idx)
             # return self._data.loc[self._idx]
         # return self._data[int(self._idx), name]
-        value = self._data.filter(pl.col("RUN") == self._idx)[name].item()
+        try:
+            value = self._data.filter(pl.col("RUN") == self._idx)[name].item()
+        except pl.exceptions.ColumnNotFoundError:
+            return default
         if value is None:
             value = default
         if isinstance(value, pl.Series):
