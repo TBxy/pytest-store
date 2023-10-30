@@ -165,7 +165,7 @@ class Store:
         if isinstance(_path_or_obj, Path):
             if not format:
                 format = _path_or_obj.suffix[1:]
-            ic(format, _path_or_obj, _path_or_obj.suffix)
+            # ic(format, _path_or_obj, _path_or_obj.suffix)
             obj = SaveSettings(path=_path_or_obj, name=name, format=format, options=options)
         if obj is None:
             raise UserWarning(f"Could not create 'SaveSettings' object with type {type(_path_or_obj)}.")
@@ -182,7 +182,7 @@ class Store:
             if force:
                 path.unlink(missing_ok=True)
                 return
-            ic(path)
+            # ic(path)
             path.rename(get_new_name(f"{path.name}.bak"))
 
 
