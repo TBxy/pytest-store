@@ -15,22 +15,23 @@ def cpu_load(minutes: Literal[1, 5, 15] = 5):
 @pytest.mark.parametrize("load,expected", ((1, 80), (5, 50), (15, 45)))
 def test_cpu_load(load, expected):
     cpu_load_percent = cpu_load(load)
-    print(f"cpu load: {cpu_load_percent}%")
+    # print(f"cpu load: {cpu_load_percent}%")
+    print("set cpu load: ", cpu_load_percent)
     store.set(f"{load}min", cpu_load_percent)
     assert cpu_load_percent < expected
 
 
 def test_mem_usage():
     mem_percent = psutil.virtual_memory()[2]
-    print(f"mem usage: {mem_percent}%")
+    # print(f"mem usage: {mem_percent}%")
     store.set("percent", mem_percent)
-    print("ID", store.item.nodeid)
+    # print("ID", store.item.nodeid)
     assert mem_percent < 90
 
 
 def test_network():
     net = psutil.net_io_counters(pernic=False, nowrap=False)
-    print("network: ", net)
+    # print("network: ", net)
     store.set("errin", net.errin)
     store.set("errout", net.errout)
     assert net.errin == 0
