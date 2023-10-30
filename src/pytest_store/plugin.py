@@ -124,39 +124,19 @@ def _use_pytest_repeat(item, count):
 def pytest_runtest_setup(item: pytest.Item) -> None:
     # TODO: need to adapot --count to know which iteration and then make new entry
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # support for pytest-repeat
-    count = item.config.getoption("count", 0)
+    # support for pytest-rerun
     rerun_for = item.config.getoption("rerun_for", None)
     if rerun_for is not None:
         _use_pytest_rerun(item, rerun_for)
+    # support for pytest-repeat
+    count = item.config.getoption("count", 0)
     elif count is not None and count > 1:
         _use_pytest_repeat(item, count)
-    # if not hasattr(item, "store_run"):
-    #    count = item.config.getoption("count", 0)
-    #    pat = None
-    #    if count is not None and count > 1:
-    #        pat = r"(\d+)-\d+\]"
-    #    if pat:
-    #        m = re.search(pat, item.name)
-    #        if m and m.group(1):
-    #            idx = int(m.group(1)) - 1
-    #            item.store_run = idx
-    # if not hasattr(item, "store_testname"):
-    #    count = item.config.getoption("count", 0)
-    #    pat = None
-    #    if count is not None and count > 1:
-    #        pat = r"(\d+)-\d+\]"
-    #    if pat:
-    #        m = re.search(pat, item.name)
-    #        if m and m.group(1):
-    #            idx = int(m.group(1)) - 1
-    #            store.set_index(idx)
-    #            item.store_run = idx
-    #        item.store_testname = item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]")
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     if not hasattr(item, "store_testname"):
-        item.store_testname = item.nodeid
+        #item.store_testname = item.nodeid
+        item.store_testname = item.name
     if not hasattr(item, "store_run"):
         item.store_run = 0
     store.item = item
