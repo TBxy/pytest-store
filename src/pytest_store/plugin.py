@@ -164,7 +164,6 @@ def pytest_runtest_logreport(report: pytest.TestReport):
     if report.outcome == "skipped" or getattr(item, "_skipped", False):
         setattr(item, "_skipped", True)
         return
-    ic(item)
     name = "pass"
     if report.when in ("setup", "teardown"):
         name = f"{name}_{report.when}"
