@@ -7,6 +7,11 @@ import random
 from pytest_store import store
 
 
+@pytest.mark.skip("test skipping")
+def test_skipped():
+    print("This test is skipped")
+
+
 def test_randint():
     numbers = [random.randint(5, 10) for _i in range(1, random.randint(2, 4))]
     store.set("numbers", numbers)
