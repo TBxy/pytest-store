@@ -102,8 +102,8 @@ dynamic_context = "test_function"
 # treat these directories as the same when combining
 # the first item is going to be the canonical dir
 source = [
-    "src/pytest_bdd",
-    ".tox/*/lib/python*/site-packages/pytest_bdd",
+    "src/pytest_store",
+    ".tox/*/lib/python*/site-packages/pytest_store",
 ]
 
 [tool.ruff]

@@ -120,44 +120,41 @@ def _use_pytest_repeat(item, count):
 
 
 # @pytest.hookimpl(tryfirst=True)
+@pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
-    store.item = item
-    # item.store_testname = item.name.replace("test_", "")
-
-
-@pytest.hookimpl(trylast=True)
-def pytest_runtest_setup(item: pytest.Item) -> None:
-    # store.item = item
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # support for pytest-rerun
+    ic(item.name)
     rerun_for = item.config.getoption("rerun_for", None)
     if rerun_for is not None:
         _use_pytest_rerun(item, rerun_for)
-    # support for pytest-repeat
-    count = item.config.getoption("count", 0)
-    if count is not None and count > 1:
-        _use_pytest_repeat(item, count)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    if not hasattr(item, "store_testname"):
-        # item.store_testname = item.nodeid
-        item.store_testname = item.name.replace("test_", "")
-    if not hasattr(item, "store_run"):
-        item.store_run = 0
-    # first row
-    ic(item.name)
-    if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
-        if store.get("PASS", default=None, prefix="") is None:
-            store.set("PASS", False, prefix="")
-            ic("set PASS to False")
     if store.get_index() != item.store_run:
+        store.set_index(item.store_run)
+        ic("set index", item.store_run)
+    if store.get("PASS", default=None, prefix="") is None:
         if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
             store.set("PASS", bool(item.config.stash.get("_all_pass", True)), prefix="")
             ic("set PASS to", bool(item.config.stash.get("_all_pass", True)))
             item.config.stash["_all_pass"] = True
-        ic("set index", item.store_run)
-        store.set_index(item.store_run)
+    store.item = item
+    yield
+
+
+def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config, items: list[pytest.Item]) -> None:
+    for item in items:
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # support for pytest-rerun
+        # rerun_for = config.getoption("rerun_for", None)
+        # if rerun_for is not None:
+        #    _use_pytest_rerun(item, rerun_for)
+        # support for pytest-repeat
+        count = config.getoption("count", 0)
+        if count is not None and count > 1:
+            _use_pytest_repeat(item, count)
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        if not hasattr(item, "store_testname"):
+            # item.store_testname = item.nodeid
+            item.store_testname = item.name.replace("test_", "")
+        if not hasattr(item, "store_run"):
+            item.store_run = 0
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
