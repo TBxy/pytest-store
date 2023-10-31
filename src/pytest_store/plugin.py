@@ -125,7 +125,7 @@ def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
     # ic(item.name)
     rerun_for = item.config.getoption("rerun_for", None)
     if rerun_for is not None:
-        _use_pytest_rerun(item, rerun_for)
+        _use_pytest_rerun(nextitem, rerun_for)
     if store.get_index() != item.store_run:
         store.set_index(item.store_run)
         # ic("set index", item.store_run)
