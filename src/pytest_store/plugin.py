@@ -100,9 +100,10 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
 
 
 def _use_pytest_rerun(item, rerun_for):
-    if not hasattr(item, "store_run") or getattr(item, "_use_store_run", False):
-        item.store_run = int(getattr(item, "execution_count", 0))
-        item._use_store_run = True
+    if item is not None:
+        if not hasattr(item, "store_run") or getattr(item, "_use_store_run", False):
+            item.store_run = int(getattr(item, "execution_count", 0))
+            item._use_store_run = True
 
 
 def _use_pytest_repeat(item, count):
