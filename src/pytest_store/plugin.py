@@ -159,12 +159,14 @@ def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
-    if report.when == "call":
-        item = store.item
-        if item is not None:
-            if not report.passed:
-                item.config.stash["_all_pass"] = False
-            store.set("pass", report.passed)
+    name = "pass"
+    if report.when in ("setup", "teardown"):
+        name = f"{name}_{report.when}"
+    item = store.item
+    if item is not None:
+        if not report.passed:
+            item.config.stash["_all_pass"] = False
+        store.set(name, report.passed)
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: Union[int, pytest.ExitCode]) -> None:
