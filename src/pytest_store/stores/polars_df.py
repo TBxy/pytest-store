@@ -30,7 +30,7 @@ class PolarsDF(StoreBase):
     def set_index(self, idx: int):
         self._idx = idx
         if not self._data.filter(pl.col("index") == idx).shape[0]:
-            print(f"index {idx} is missing, add it")
+            #print(f"index {idx} is missing, add it")
             # self._data = pl.concat([self._data, pl.DataFrame({"index": [idx]})])
             new_df = self._data.clear(1)
             new_df[0, "index"] = idx

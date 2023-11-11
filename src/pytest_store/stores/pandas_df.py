@@ -28,7 +28,7 @@ class PandasDF(StoreBase):
     def set_index(self, idx: int):
         self._idx = idx
         if idx not in self._data.index:
-            print("index is missing, add it")
+            #print("index is missing, add it")
             if len(self._data.iloc[0].values):
                 self._data.loc[idx] = self._data.loc[0]
                 self._data.loc[idx, :] = None
@@ -65,7 +65,7 @@ class PandasDF(StoreBase):
         extras = __extras if __extras else SaveExtras()
         extras.settings = settings
         for cfg in settings:
-            print(f"Format '{cfg.format}'", settings)
+            #print(f"Format '{cfg.format}'", settings)
             if cfg.format in ["xls", "xlsx"]:
                 cfg.format = "excel"
                 cfg.default_options(
