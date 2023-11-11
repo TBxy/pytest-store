@@ -46,7 +46,10 @@ class PandasDF(StoreBase):
     ) -> Union[dict[str, STORE_TYPES], STORE_TYPES]:
         if name is None:
             return self._data.loc[self._idx]
-        val = self._data.at[self._idx, name]
+        try:
+            val = self._data.at[self._idx, name]
+        except KeyError:
+            return default
         # if val is None or np.isnan(val):
         if not isinstance(val, list) and val is not None and np.isnan(val):
             return default

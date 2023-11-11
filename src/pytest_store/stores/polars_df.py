@@ -23,17 +23,17 @@ from pytest_store.stores._store_base import StoreBase, SaveSettings, SaveExtras
 class PolarsDF(StoreBase):
     def __init__(self):
         super().__init__()
-        self._data: pl.DataFrame = pl.DataFrame({"index": [0]})
+        self._data: pl.DataFrame = pl.DataFrame({"RUN": [0]})
         self._idx = 0
         self.set_index(0)
 
     def set_index(self, idx: int):
         self._idx = idx
-        if not self._data.filter(pl.col("index") == idx).shape[0]:
-            #print(f"index {idx} is missing, add it")
+        if not self._data.filter(pl.col("RUN") == idx).shape[0]:
+            # print(f"index {idx} is missing, add it")
             # self._data = pl.concat([self._data, pl.DataFrame({"index": [idx]})])
             new_df = self._data.clear(1)
-            new_df[0, "index"] = idx
+            new_df[0, "RUN"] = idx
             self._data.extend(new_df)
             # if len(self._data.iloc[0].values):
             #    self._data.loc[idx] = self._data.loc[0]
@@ -43,7 +43,9 @@ class PolarsDF(StoreBase):
 
     def set(self, name: str, value: STORE_TYPES):
         otherwise = pl.col(name) if name in self._data.columns else None
-        _updated = self._data.select(pl.when(pl.col("index") == self._idx).then(value).otherwise(otherwise).alias(name))
+        if isinstance(value, str):
+            value = pl.lit(value)
+        _updated = self._data.select(pl.when(pl.col("RUN") == self._idx).then(value).otherwise(otherwise).alias(name))
         self._data = self._data.with_columns(_updated)
         return value
 
@@ -51,10 +53,13 @@ class PolarsDF(StoreBase):
         self, name: Optional[str] = None, default: STORE_TYPES = None
     ) -> Union[dict[str, STORE_TYPES], STORE_TYPES]:
         if name is None:
-            return self._data.filter(pl.col("index") == self._idx)
+            return self._data.filter(pl.col("RUN") == self._idx)
             # return self._data.loc[self._idx]
         # return self._data[int(self._idx), name]
-        value = self._data.filter(pl.col("index") == self._idx)[name].item()
+        try:
+            value = self._data.filter(pl.col("RUN") == self._idx)[name].item()
+        except pl.exceptions.ColumnNotFoundError:
+            return default
         if value is None:
             value = default
         if isinstance(value, pl.Series):
