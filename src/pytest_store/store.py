@@ -18,7 +18,7 @@ class Store:
         self,
         store: Optional[StoreBase] = None,
         default_name=None,
-        default_prefix: str = "{item.store_testname}",  # use either item or testname
+        default_prefix: str = "{item._store_testname}",  # use either item or testname
     ):
         self.__stores__: dict[str, StoreBase] = {}
         self._default_active_store = "default"

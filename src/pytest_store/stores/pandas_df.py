@@ -60,7 +60,7 @@ class PandasDF(StoreBase):
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
             _idx = self._data.index.copy()
-            # self._data.index = [""] * len(_idx)
+            self._data.index = [""] * len(_idx)
             with pd.option_context("display.max_rows", max_lines):
                 print(self._data)
             self._data.index = _idx

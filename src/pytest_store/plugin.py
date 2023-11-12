@@ -17,9 +17,9 @@ from _pytest.config import notset, Notset
 from _pytest.terminal import TerminalReporter
 
 all_pass_key = pytest.StashKey[bool]()
-# item stash keys
-store_testname_key = "store_testname"
-store_run_key = "store_run"
+
+# item stash attriutes
+store_testname_attr = "_store_testname"
 store_run_attr = "_store_run"
 
 
@@ -42,7 +42,7 @@ def pytest_addoption(parser):
     parser.addini("store_save", "Save file to path, format depends on the ending unless specified.")
     parser.addini("store_save_format", "Save format.")
     parser.addini("store_save_options", "Additional options for saving")
-    parser.addini("store-save-force", help="Overwrite exisintg file")
+    parser.addini("store-save-force", help="Overwrite existing file")
 
 
 _OPTION_TYPE = Union[None, int, float, str, Notset]
@@ -112,21 +112,22 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
 def _use_pytest_repeat(item, count):
     pat = r"(\d+)-\d+\]"
     m = re.search(pat, item.name)
-    if item.stash.get(store_run_key, None) is None:
+    if getattr(item, store_run_attr, None) is None:
         if m and m.group(1):
             idx = int(m.group(1)) - 1
-            item.stash[store_run_key] = int(idx)
-    if item.stash.get(store_testname_key, None) is None:
+            setattr(item, store_run_attr, int(idx))
+    if getattr(item, store_testname_attr, None) is None:
         if m:
-            item.stash[store_testname_key] = (
-                item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]").replace("test_", "")
+            setattr(
+                item,
+                store_testname_attr,
+                item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]").replace("test_", ""),
             )
 
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
     store_run = getattr(item, store_run_attr, 0)
-    # item.stash.get(store_run_key, 0)
     if store.get_index() != store_run:
         store.set_index(store_run)
     if store.get("PASS", default=None, prefix="") is None:
@@ -149,19 +150,18 @@ def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config
         # if rerun_for is not None:
         #    _use_pytest_rerun(item, rerun_for)
         # support for pytest-repeat
-        if item.stash.get(store_testname_key, None) is None:
+        if getattr(item, store_testname_attr, None) is None:
             count = config.getoption("count", 0)
             if count is not None and count > 1:
                 _use_pytest_repeat(item, count)
             # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        if item.stash.get(store_testname_key, None) is None:
-            item.stash[store_testname_key] = item.name.replace("test_", "")
+        if getattr(item, store_testname_attr, None) is None:
+            setattr(item, store_testname_attr, item.name.replace("test_", ""))
         store_run = getattr(item, store_run_attr, None)
         if store_run is None:
             setattr(item, store_run_attr, 0)
-        if item.stash.get(store_run_key, None) is None:
-            item.stash[store_run_key] = 0
-        item.store_testname = item.stash[store_testname_key]
+        if getattr(item, store_run_attr, None) is None:
+            setattr(item, store_run_attr, 0)
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
