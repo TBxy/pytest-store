@@ -16,7 +16,8 @@ from icecream import ic
 from _pytest.config import notset, Notset
 from _pytest.terminal import TerminalReporter
 
-all_pass_key = pytest.StashKey[bool]()
+item_pass_key = pytest.StashKey[bool]()
+all_pass_key = pytest.StashKey[dict]()
 
 # item stash attriutes
 store_testname_attr = "_store_testname"
@@ -130,14 +131,15 @@ def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
     store_run = getattr(item, store_run_attr, 0)
     if store.get_index() != store_run:
         store.set_index(store_run)
-    if store.get("PASS", default=None, prefix="") is None:
-        if (
-            item.config.getoption("repeat_scope", None) == "session"
-            or item.config.getoption("rerun_time", None)
-            or item.config.getoption("rerun_iter", None)
-        ):
-            store.set("PASS", bool(item.session.stash.get(all_pass_key, True)), prefix="")
-            item.session.stash[all_pass_key] = True
+        # if store.get("PASS", default=None, prefix="") is None:
+        #    if (
+        #        item.config.getoption("repeat_scope", None) == "session"
+        #        or item.config.getoption("rerun_time", None)
+        #        or item.config.getoption("rerun_iter", None)
+        #    ):
+        #        # store.set("PASS", bool(item.session.stash.get(all_pass_key, True)), prefix="")
+        #        store.set("PASS", True, prefix="")
+        #        # item.session.stash[all_pass_key] = True
     store.item = item
     yield
 
@@ -173,16 +175,44 @@ def pytest_runtest_logreport(report: pytest.TestReport):
     if report.when in ("setup", "teardown"):
         name = f"{name}_{report.when}"
     if item is not None:
-        if not report.passed:
-            item.session.stash[all_pass_key] = False
+        # if not report.passed:
+        #    item.session.stash[item_pass_key] = False
+        # item.stash[item_pass_key] = item.stash.get(item_pass_key, True) and report.passed
         store.set(name, report.passed)
         # store.set(f"outcome_{report.when}", report.outcome)
 
 
+@pytest.hookimpl(tryfirst=True, hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item, call):
+    outcome = yield
+    report: pytest.TestReport = outcome.get_result()
+    item.stash[item_pass_key] = item.stash.get(item_pass_key, True) and report.passed
+    if item.session.stash.get(all_pass_key, None) is None:
+        item.session.stash[all_pass_key] = {}
+    if report.when in ("call",):
+        prev = item.session.stash.get(all_pass_key, {}).get(getattr(item, store_run_attr, 0), True)
+        item.session.stash[all_pass_key][getattr(item, store_run_attr, 0)] = prev and report.passed
+
+
 def pytest_sessionfinish(session: pytest.Session, exitstatus: Union[int, pytest.ExitCode]) -> None:
     if session.config.getoption("repeat_scope", None) == "session" or session.config.getoption("rerun_for", None):
-        store.set("PASS", bool(session.stash.get(all_pass_key, True)), prefix="")
-        session.stash[all_pass_key] = True
+        # store.set("PASS", bool(session.stash.get(all_pass_key, True)), prefix="")
+        # session.stash[item_pass_key] = True
+        # for item in session.items:
+        #    _idx = getattr(item, store_run_attr, None)
+        #    if _idx is None:
+        #        continue
+        #    store.set_index(_idx)
+        #    item_passed = item.stash.get(item_pass_key, False)
+        #    prevs_passed = bool(store.get("PASS", True, prefix=""))
+        #    # store.append("PASSprevs", prevs_passed, prefix="")
+        #    # store.append("PASSitems", item_passed, prefix="")
+        #    store.set("PASS", item_passed and prevs_passed, prefix="")
+
+        all_passed = session.stash.get(all_pass_key, {})
+        for idx, passed in all_passed.items():
+            store.set_index(idx)
+            store.set("PASS", passed, prefix="")
     store.save()
     # store_to_file(session.config)
 
