@@ -198,7 +198,7 @@ def _add_all_pass(session):
     return (
         session.config.getoption("repeat_scope", None) == "session"
         or session.config.getoption("rerun_time", None)
-        or session.config.getoption("rerun_count", None)
+        or session.config.getoption("rerun_iter", None)
     )
 
 
