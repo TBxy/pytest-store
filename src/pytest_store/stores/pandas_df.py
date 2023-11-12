@@ -28,7 +28,7 @@ class PandasDF(StoreBase):
     def set_index(self, idx: int):
         self._idx = idx
         if idx not in self._data.index:
-            print(f"index '{idx}' is missing, add it")
+            # print(f"index '{idx}' is missing, add it")
             if len(self._data.iloc[0].values):
                 self._data.loc[idx] = self._data.loc[0]
                 self._data.loc[idx, :] = None
