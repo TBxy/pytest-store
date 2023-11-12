@@ -44,8 +44,8 @@ def pytest_addoption(parser):
 _OPTION_TYPE = Union[None, int, float, str, Notset]
 
 # item stash keys
-store_testname_key = pytest.StashKey[str]()
-store_run_key = pytest.StashKey[int]()
+store_testname_key = "store_testname"  # pytest.StashKey[str]()
+store_run_key = "stire_run"  # pytest.StashKey[int]()
 
 
 def get_option_or_ini(
@@ -160,6 +160,7 @@ def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config
             item.stash[store_testname_key] = item.name.replace("test_", "")
         if item.stash.get(store_run_key, None) is None:
             item.stash[store_run_key] = 0
+        item.store_testname = item.stash[store_testname_key]
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
