@@ -20,6 +20,7 @@ all_pass_key = pytest.StashKey[bool]()
 # item stash keys
 store_testname_key = "store_testname"
 store_run_key = "store_run"
+store_run_attr = "_store_run"
 
 
 def pytest_addoption(parser):
@@ -124,8 +125,10 @@ def _use_pytest_repeat(item, count):
 
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
-    if store.get_index() != item.stash.get(store_run_key, 0):
-        store.set_index(item.stash.get(store_run_key, 0))
+    store_run = getattr(item, store_run_attr, 0)
+    # item.stash.get(store_run_key, 0)
+    if store.get_index() != store_run:
+        store.set_index(store_run)
     if store.get("PASS", default=None, prefix="") is None:
         if (
             item.config.getoption("repeat_scope", None) == "session"
@@ -153,6 +156,9 @@ def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config
             # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         if item.stash.get(store_testname_key, None) is None:
             item.stash[store_testname_key] = item.name.replace("test_", "")
+        store_run = getattr(item, store_run_attr, None)
+        if store_run is None:
+            setattr(item, store_run_attr, 0)
         if item.stash.get(store_run_key, None) is None:
             item.stash[store_run_key] = 0
         item.store_testname = item.stash[store_testname_key]
