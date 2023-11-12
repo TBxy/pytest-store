@@ -28,7 +28,7 @@ class PandasDF(StoreBase):
     def set_index(self, idx: int):
         self._idx = idx
         if idx not in self._data.index:
-            # print("index is missing, add it")
+            print(f"index '{idx}' is missing, add it")
             if len(self._data.iloc[0].values):
                 self._data.loc[idx] = self._data.loc[0]
                 self._data.loc[idx, :] = None
@@ -60,7 +60,7 @@ class PandasDF(StoreBase):
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
             _idx = self._data.index.copy()
-            self._data.index = [""] * len(_idx)
+            # self._data.index = [""] * len(_idx)
             with pd.option_context("display.max_rows", max_lines):
                 print(self._data)
             self._data.index = _idx
