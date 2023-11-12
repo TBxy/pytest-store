@@ -1,6 +1,8 @@
 from __future__ import annotations
+from typing import Callable, Optional
+from ._store_base import StoreBase
 
-Stores = {}
+Stores: dict[str, Optional[Callable[[], StoreBase]]] = {}
 try:
     import pandas as pd
     from .pandas_df import PandasDF
@@ -22,3 +24,4 @@ except ModuleNotFoundError:
 from .list_dict import ListDict
 
 Stores["list-dict"] = ListDict
+Stores["none"] = None

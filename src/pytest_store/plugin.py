@@ -22,7 +22,11 @@ all_pass_key = pytest.StashKey[bool]()
 def pytest_addoption(parser):
     group = parser.getgroup("store")
     group.addoption(
-        "--store-type", action="store", help="Set store type (default: pandas).", choices=[n for n in Stores]
+        "--store-type",
+        action="store",
+        default="list-dict",
+        help="Set store type (default: pandas).",
+        choices=[n for n in Stores],
     )
     group.addoption(
         "--store-save", action="store", help="Save file to path, format depends on the ending unless specified."
@@ -38,6 +42,10 @@ def pytest_addoption(parser):
 
 
 _OPTION_TYPE = Union[None, int, float, str, Notset]
+
+# item stash keys
+store_testname_key = pytest.StashKey[str]()
+store_run_key = pytest.StashKey[int]()
 
 
 def get_option_or_ini(
@@ -56,11 +64,14 @@ def get_option_or_ini(
 
 def set_store_obj(config: pytest.Config):
     store_obj_str = get_option_or_ini("store_type", config, default="none")
-    store_obj_str = store_obj_str.replace("_", "-").lower()
-    if store_obj_str in Stores:
-        store.set_store(Stores[store_obj_str]())
-    elif not (store_obj_str in (None, notset, "", "none")):
+    if not (store_obj_str in (None, notset, "", "none") or store_obj_str in Stores):
         raise pytest.UsageError(f"Store type {store_obj_str} does not exist, use {', '.join(Stores.keys())}.")
+    if isinstance(store_obj_str, str):
+        store_obj_str = store_obj_str.replace("_", "-").lower()
+        if store_obj_str in Stores:
+            obj = Stores.get(store_obj_str, None)
+            if obj is not None:
+                store.set_store(obj())
 
 
 def set_save_to_file(config: pytest.Config):
@@ -101,23 +112,16 @@ def pytest_terminal_summary(terminalreporter: TerminalReporter, exitstatus, conf
             # terminalreporter.write_sep(sep="-", title="oke")
 
 
-def _use_pytest_rerun(item, rerun_for):
-    if item is not None:
-        if not hasattr(item, "store_run") or getattr(item, "_use_store_run", False):
-            item.store_run = int(getattr(item, "execution_count", 0))
-            item._use_store_run = True
-
-
 def _use_pytest_repeat(item, count):
     pat = r"(\d+)-\d+\]"
     m = re.search(pat, item.name)
-    if not hasattr(item, "store_run"):
+    if item.stash.get(store_run_key, None) is None:
         if m and m.group(1):
             idx = int(m.group(1)) - 1
-            item.store_run = int(idx)
-    if not hasattr(item, "store_testname"):
+            item.stash[store_run_key] = int(idx)
+    if item.stash.get(store_testname_key, None) is None:
         if m:
-            item.store_testname = (
+            item.stash[store_testname_key] = (
                 item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]").replace("test_", "")
             )
 
@@ -129,8 +133,8 @@ def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item):
     # rerun_for = item.config.getoption("rerun_for", None)
     # if rerun_for is not None:
     #    _use_pytest_rerun(nextitem, rerun_for)
-    if store.get_index() != item.store_run:
-        store.set_index(item.store_run)
+    if store.get_index() != item.stash.get(store_run_key, 0):
+        store.set_index(item.stash.get(store_run_key, 0))
         # ic("set index", item.store_run)
     if store.get("PASS", default=None, prefix="") is None:
         if item.config.getoption("repeat_scope", None) == "session" or item.config.getoption("rerun_for", None):
@@ -152,11 +156,10 @@ def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config
         if count is not None and count > 1:
             _use_pytest_repeat(item, count)
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        if not hasattr(item, "store_testname"):
-            # item.store_testname = item.nodeid
-            item.store_testname = item.name.replace("test_", "")
-        if not hasattr(item, "store_run"):
-            item.store_run = 0
+        if item.stash.get(store_testname_key, None) is None:
+            item.stash[store_testname_key] = item.name.replace("test_", "")
+        if item.stash.get(store_run_key, None) is None:
+            item.stash[store_run_key] = 0
 
 
 def pytest_runtest_logreport(report: pytest.TestReport):
