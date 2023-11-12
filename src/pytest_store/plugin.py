@@ -193,8 +193,14 @@ def pytest_runtest_makereport(item: pytest.Item, call):
         prev = item.session.stash.get(all_pass_key, {}).get(getattr(item, store_run_attr, 0), True)
         item.session.stash[all_pass_key][getattr(item, store_run_attr, 0)] = prev and report.passed
 
-def _add_all_pass(session)
-    return session.config.getoption("repeat_scope", None) == "session" or session.config.getoption("rerun_time", None) or session.config.getoption("rerun_count", None):
+
+def _add_all_pass(session):
+    return (
+        session.config.getoption("repeat_scope", None) == "session"
+        or session.config.getoption("rerun_time", None)
+        or session.config.getoption("rerun_count", None)
+    )
+
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: Union[int, pytest.ExitCode]) -> None:
     if _add_all_pass(session):
