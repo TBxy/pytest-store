@@ -21,7 +21,7 @@ from pytest_store.stores._store_base import StoreBase, SaveSettings, SaveExtras
 class PandasDF(StoreBase):
     def __init__(self):
         super().__init__()
-        self._data = pd.DataFrame({"RUN": None}, index=[0])
+        self._data = pd.DataFrame(columns=["RUN"], index=[0])
         self._idx = None
         self.set_index(0)
 
@@ -34,7 +34,7 @@ class PandasDF(StoreBase):
                 self._data.loc[idx, :] = None
             else:
                 self._data = pd.concat([self._data, pd.DataFrame({}, index=[idx])])
-            self._data["RUN"] = self._data.index
+            self._data["RUN"] = self._data.index.copy()
 
     def set(self, name: str, value: STORE_TYPES):
         if isinstance(value, (dict, list)):
