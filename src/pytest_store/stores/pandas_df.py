@@ -21,19 +21,20 @@ from pytest_store.stores._store_base import StoreBase, SaveSettings, SaveExtras
 class PandasDF(StoreBase):
     def __init__(self):
         super().__init__()
-        self._data = pd.DataFrame({}, index=[0])
+        self._data = pd.DataFrame(columns=["RUN"], index=[0])
         self._idx = None
         self.set_index(0)
 
     def set_index(self, idx: int):
         self._idx = idx
         if idx not in self._data.index:
-            print("index is missing, add it")
+            # print(f"index '{idx}' is missing, add it")
             if len(self._data.iloc[0].values):
                 self._data.loc[idx] = self._data.loc[0]
                 self._data.loc[idx, :] = None
             else:
                 self._data = pd.concat([self._data, pd.DataFrame({}, index=[idx])])
+            self._data["RUN"] = self._data.index.copy()
 
     def set(self, name: str, value: STORE_TYPES):
         if isinstance(value, (dict, list)):
@@ -58,8 +59,11 @@ class PandasDF(StoreBase):
     def to_string(self, max_lines=30, max_width=0):
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
+            _idx = self._data.index.copy()
+            self._data.index = [""] * len(_idx)
             with pd.option_context("display.max_rows", max_lines):
                 print(self._data)
+            self._data.index = _idx
         return f.getvalue()
 
     def save(self, __save_settings: Union[None, SaveSettings] = None, __extras: Union[None, SaveExtras] = None):
@@ -68,7 +72,8 @@ class PandasDF(StoreBase):
         extras = __extras if __extras else SaveExtras()
         extras.settings = settings
         for cfg in settings:
-            print(f"Format '{cfg.format}'", settings)
+            cfg.default_options({"index": False})
+            # print(f"Format '{cfg.format}'", settings)
             if cfg.format in ["xls", "xlsx"]:
                 cfg.format = "excel"
                 cfg.default_options(
