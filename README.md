@@ -31,8 +31,10 @@ pytest --store-type pl --store-save results.xls examples
 You can install `pytest-store` via [pip] from [PyPI] or this [repo]:
 
 ```shell
-pip install pytest-store
+pip install pytest-store[<extra>] # extras = "all", "pandas", "polars", "database", "excel", "parquet"
+pip install pytest-store[polars,excel,database]
 pip install git+git@github.com:TBxy/pytest-store.git@main # latest version
+pip install pytest-store --all-extras # development
 ```
 
 ## Todos

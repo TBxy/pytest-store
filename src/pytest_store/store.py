@@ -9,7 +9,6 @@ import pytest
 
 from icecream import ic
 from .types import STORE_TYPES
-from .stores import PandasDF
 from .stores._store_base import StoreBase, SaveSettings
 
 

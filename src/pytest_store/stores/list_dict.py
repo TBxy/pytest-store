@@ -6,13 +6,6 @@ from pathlib import Path
 from typing import Optional, Union
 import msgspec
 
-import numpy as np
-import pandas as pd
-from icecream import ic
-
-with contextlib.suppress(ModuleNotFoundError):
-    from rich import print
-
 from pytest_store.types import STORE_TYPES
 from pytest_store.stores._store_base import StoreBase, SaveSettings, SaveExtras
 
@@ -75,6 +68,9 @@ class ListDict(StoreBase):
 
 
 if __name__ == "__main__":
+    with contextlib.suppress(ModuleNotFoundError):
+        from rich import print
+    from icecream import ic
     store = ListDict()
 
     store.set_index(1)
