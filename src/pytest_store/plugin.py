@@ -17,6 +17,7 @@ from _pytest.config import notset, Notset
 from _pytest.terminal import TerminalReporter
 
 all_pass_key = pytest.StashKey[bool]()
+store_testname_attr = "_store_testname"
 
 
 def pytest_addoption(parser):
@@ -115,10 +116,12 @@ def _use_pytest_repeat(item, count):
         if m and m.group(1):
             idx = int(m.group(1)) - 1
             item.store_run = int(idx)
-    if not hasattr(item, "store_testname"):
+    if not hasattr(item, store_testname_attr):
         if m:
-            item.store_testname = (
-                item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]").replace("test_", "")
+            setattr(
+                item,
+                store_testname_attr,
+                item.name.replace(f"[{m.group(0)}", "").replace(f"-{m.group(0)}", "]").replace("test_", ""),
             )
 
 
@@ -152,9 +155,9 @@ def pytest_collection_modifyitems(session: pytest.Session, config: pytest.Config
         if count is not None and count > 1:
             _use_pytest_repeat(item, count)
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        if not hasattr(item, "store_testname"):
+        if not hasattr(item, store_testname_attr):
             # item.store_testname = item.nodeid
-            item.store_testname = item.name.replace("test_", "")
+            setattr(item, store_testname_attr, item.name.replace("test_", ""))
         if not hasattr(item, "store_run"):
             item.store_run = 0
 
