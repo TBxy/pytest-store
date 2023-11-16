@@ -7,7 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-[unreleased]: https://github.com/TBxy/pytest-store/compare/v1.1.1...HEAD
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+[unreleased]: https://github.com/TBxy/pytest-store/compare/v0.0.2...HEAD
+
+
+## [0.0.2] - 2023-11-16
+
+### Open Issue
+
+- The `PASS` entry over all tests run is not always correct.
+
+### Added
+
+- Support for [pytest-repeat] if `--repeat-scope` is set to _session_.
+- Support for [pytest-rerun-all].
+
+### Changed
+
+- Use _item_ attribute `_store_testname` and `_store_run` for the name and iteration counter.
+  This attributes can be set by other plugins or in a `conftest.py` file.
+
+[0.0.2]: https://github.com/TBxy/pytest-store/v0.0.1...v0.0.2
+
 
 ## [0.0.1] - 2023-11-12
 
@@ -17,6 +45,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [0.0.1]: https://github.com/TBxy/pytest-store/tree/v0.0.1
-
-
-[0.0.2]: https://github.com/TBxy/pytest-store/v0.0.1...v0.0.2
+[pytest-repeat]: https://github.com/pytest-dev/pytest-repeat
+[pytest-rerun-all]: https://github.com/TBxy/pytest-rerun-all
