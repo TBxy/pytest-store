@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-store"
-version = "0.0.5"
+version = "0.0.6"
 description = "Pytest plugin to store values from test runs"
 authors = ["tb <tb@wodore.com>"]
 license = "MIT"
@@ -33,7 +33,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.14"
 pytest = ">=7.0.0"
-msgspec = "^0.18"
+msgspec = "^0.19"
 pyyaml = "^6.0"
 tabulate = "^0.9.0" # markdown
 # pandas
