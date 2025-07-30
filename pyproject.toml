@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-store"
-version = "0.0.2"
+version = "0.0.3"
 description = "Pytest plugin to store values from test runs"
 authors = ["tb <tb@wodore.com>"]
 license = "MIT"
@@ -17,10 +17,10 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Utilities",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [tool.poetry.urls]
@@ -31,7 +31,7 @@ classifiers = [
 "pytest-store" = "pytest_store.plugin"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.13"
+python = ">=3.10,<3.14"
 pytest = ">=7.0.0"
 msgspec = "^0.18"
 pyyaml = "^6.0"
@@ -79,7 +79,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
-target-version = ["py38", "py39", "py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312", "py313"]
 
 [tool.isort]
 profile = "black"
@@ -150,7 +150,7 @@ isort.required-imports = ["from __future__ import annotations"]
 
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 files = "src/pytest_store/**/*.py"
