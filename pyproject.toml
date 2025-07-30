@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-store"
-version = "0.0.3"
+version = "0.0.4"
 description = "Pytest plugin to store values from test runs"
 authors = ["tb <tb@wodore.com>"]
 license = "MIT"
